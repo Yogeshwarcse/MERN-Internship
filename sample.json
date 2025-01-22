@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Somu",
+    "age": 25,
+    "city": "Tamil Nadu",
+    "amount": 1500
+  },
+  {
+    "name": "Yash",
+    "age": 25,
+    "city": "Bihar",
+    "amount": 1500
+  },
+  {
+    "name": "vishnu mohan",
+    "age": 25,
+    "city": "udumalpet",
+    "amount": 1500
+  },
+  {
+    "name": "John",
+    "age": 25,
+    "city": "New York",
+    "amount": 1500
+  }
+]
