@@ -1,39 +1,57 @@
-require('dotenv').config();
+require('dotenv').config(); // Load environment variables from .env file
 const express = require('express');
 const mongoose = require('mongoose');
-const app = express();
-app.use(express.json());
 const { v4: uuidv4 } = require('uuid');
 
-mongoose.connect("mongodb+srv://Yogeshwar:manimass1$@cluster0.iaytw.mongodb.net/expenses")
-    .then(() => {
-        console.log("connected to MongoDB");
-    })
-    .catch(err => console.log("Error connecting to MongoDB:", err));
+const app = express();
+app.use(express.json());
 
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => {
+        console.log("Connected to MongoDB");
+    })
+    .catch(err => {
+        console.error("Error connecting to MongoDB:", err);
+        process.exit(1); // Exit the app if connection fails
+    });
+
+// Mongoose Schema and Model
 const expenseSchema = new mongoose.Schema({
     id: { type: String, required: true },
     title: { type: String, required: true },
-    amt: { type: String, required: true },  // Assuming 'amt' is meant to be a string
+    amt: { type: String, required: true }
 });
 
 const Expense = mongoose.model("Expense", expenseSchema);
 
+// API Endpoints
 
-app.get("/api/expenses",(req,res)=>{
-    console.log(req.query)
-    res.status(200).json(expenses);
-})
-app.get("/api/expenses/:id",(req,res)=>{
-    const {id}=req.params;
-    const expense=expenses.find((expense)=>expense.id==id);
-    if(!expense){
-        res.status(404).json({message:"Not Found"});
-        return
+// Fetch all expenses
+app.get("/api/expenses", async (req, res) => {
+    try {
+        const expenses = await Expense.find();
+        res.status(200).json(expenses);
+    } catch (error) {
+        res.status(500).send({ message: "Error fetching expenses", error: error.message });
     }
-    res.status(200).json(expense);
-})
+});
 
+// Fetch a single expense by ID
+app.get("/api/expenses/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+        const expense = await Expense.findOne({ id });
+        if (!expense) {
+            return res.status(404).json({ message: "Expense not found" });
+        }
+        res.status(200).json(expense);
+    } catch (error) {
+        res.status(500).send({ message: "Error fetching expense", error: error.message });
+    }
+});
+
+// Create a new expense
 app.post("/api/expenses", async (req, res) => {
     const { title, amt } = req.body;
     const newExpense = new Expense({
@@ -49,19 +67,21 @@ app.post("/api/expenses", async (req, res) => {
     }
 });
 
+// Delete an expense by ID
 app.delete("/api/expenses/:id", async (req, res) => {
     const { id } = req.params;
     try {
         const expense = await Expense.findOneAndDelete({ id });
         if (!expense) {
-            return res.status(404).json({ message: "Not found" });
+            return res.status(404).json({ message: "Expense not found" });
         }
-        res.status(200).json({ message: "Deleted successfully" });
+        res.status(200).json({ message: "Expense deleted successfully" });
     } catch (error) {
         res.status(500).send({ message: "Error deleting expense", error: error.message });
     }
 });
 
+// Update an expense by ID
 app.put("/api/expenses/:id", async (req, res) => {
     const { id } = req.params;
     const { title, amt } = req.body;
@@ -80,6 +100,8 @@ app.put("/api/expenses/:id", async (req, res) => {
     }
 });
 
-app.listen(3009, () => {
-    console.log("server is running on port 3009");
+// Start the server
+const PORT = process.env.PORT || 3009;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
